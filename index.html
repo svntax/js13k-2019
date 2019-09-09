@@ -20,9 +20,19 @@
 			</a-entity>
 		</a-camera>
 		
+		<a-entity id="projectile" position="0 0 -1">
+			<a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
+			material="color: red"
+			rotation="180 0 0">
+			</a-entity>
+		</a-entity>
+		
 		<a-entity hookshot="hand: right">
 			<a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
-			material="color: gray">
+			material="color: gray"
+			rotation="180 0 0">
+			</a-entity>
+			<a-entity id="raycast" raycaster="showLine: true; far: 50" line="color: blue" rotation="90 0 0">
 			</a-entity>
 		</a-entity>
 		<a-entity hookshot="hand: left">
