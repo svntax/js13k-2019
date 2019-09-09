@@ -30,7 +30,23 @@ AFRAME.registerComponent("hookshot", {
 			var globalDir = point.sub(el.object3D.position);
 			shot.setAttribute("velocity", globalDir);
 		});
+		
+		el.addEventListener("hit", function(e){
+			console.log(e);
+		});
 	},
+});
+
+AFRAME.registerComponent("hook-target", {
+	schema: {},
+	
+	init: function(){
+		var data = this.data;
+		var el = this.el;
+		el.addEventListener("hit", function(e){
+			console.log("target hit");
+		});
+	}
 });
 
 AFRAME.registerComponent("velocity", {
