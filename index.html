@@ -13,7 +13,7 @@
 		</a-entity>
 		<a-sky color="#6EBAA7"></a-sky>
 		
-		<a-camera wasd-controls-enabled="true">
+		<a-camera wasd-controls-enabled="false">
 			<a-entity cursor
             position="0 0 -1"
             geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
@@ -21,24 +21,32 @@
 			</a-entity>
 		</a-camera>
 		
-		<a-sphere class="targetable" hook-target color="green" radius="0.2" position="0 1 -1"></a-sphere>
+		<a-entity id="score" position="0 0.8 -1.2" geometry="primitive: plane; width: 0.6; height: 0.3" material="color: #AAAAFF"
+		text="value: Start; color: black; width: 2; align: center"></a-entity>
 		
-		<a-entity fish position="0 1.7 -1" velocity="vel: -0.2 0 0"></a-entity>
+		<a-box width="1" height="0.5" depth="0.1" color="white" opacity="0" velocity="vel: -0.2 0 0" position="0 1.7 -4"
+		hook-target class="collider">
+			<a-entity fish></a-entity>
+		</a-box>
 		
-		<a-entity id="projectile" position="0 0 -1">
+		<a-entity id="projectile" geometry="primitive: sphere; radius: 0.05" position="0 -10 0" opacity="0.5"
+		velocity="vel: 0 0 0"
+		sphere-collider="objects: .collider; radius: 0.05">
 			<a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
 			material="color: red"
-			rotation="180 0 0"
-			sphere-collider="objects: .targetable; radius: 0.05">
-				<!--<a-sphere radius="0.05" color="white"></a-sphere>-->
+			rotation="180 0 0">
 			</a-entity>
 		</a-entity>
 		
 		<a-entity hookshot="hand: right">
 			<a-entity id="hook" geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
-			material="color: gray"
-			rotation="180 0 0">
+			material="color: red"
+			rotation="180 0 0" position="0 -0.1 0">
 			</a-entity>
+			
+			<a-torus color="gray" radius="0.04" radius-tubular="0.004"
+			rotation="0 90 0" position="0 0 0">
+			</a-torus>
 			
 			<a-entity id="raycast" raycaster="showLine: true; far: 50" line="color: blue" rotation="90 0 0">
 			</a-entity>
