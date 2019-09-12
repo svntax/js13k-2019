@@ -1,3 +1,6 @@
+var NORMAL_SPEED = 1;
+var FAST_SPEED = 3;
+
 var currentScore = 0;
 var highScore = 0;
 
@@ -157,6 +160,16 @@ AFRAME.registerComponent("hook-target", {
 				this.respawn();
 			}
 		}
+		else{
+			if(el.object3D.position.x < -8){
+				el.emit("updateVelocity", {x: NORMAL_SPEED, y: 0, z: 0}, false);
+				el.object3D.rotation.y = Math.PI;
+			}
+			if(el.object3D.position.x > 8){
+				el.emit("updateVelocity", {x: -NORMAL_SPEED, y: 0, z: 0}, false);
+				el.object3D.rotation.y = 0;
+			}
+		}
 	},
 	
 	respawn: function(){
@@ -167,16 +180,18 @@ AFRAME.registerComponent("hook-target", {
 		var newX = 0;
 		var newVelX = 0;
 		var choice = Math.random();
+		var velOffset = Math.random() * 2 - 1; //[-1, 1)
 		if(choice < 0.5){
 			//Right to left
 			newX = 6;
-			newVelX = -0.4;
-			el.object3D.rotation.y = Math.PI;
+			newVelX = -NORMAL_SPEED + velOffset;
+			el.object3D.rotation.y = 0;
 		}
 		else{
 			//Left to right
 			newX = -6;
-			newVelX = 0.4;
+			newVelX = NORMAL_SPEED + velOffset;
+			el.object3D.rotation.y = Math.PI;
 		}
 		el.object3D.position.x = newX;
 		el.emit("updateVelocity", {x: newVelX, y: 0, z: 0}, false);
