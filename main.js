@@ -127,16 +127,20 @@ AFRAME.registerComponent("fish", {
 });
 
 AFRAME.registerComponent("hook-target", {
-	schema: {},
+	schema: {
+		startGame: {type: "boolean", default: false}
+	},
 	
 	init: function(){
 		var data = this.data;
 		var el = this.el;
 		el.caught = false; //Whether it's caught by the hookshot or not
+		el.isActive = true;
 		el.hookshot = document.getElementById("projectile");
 		el.addEventListener("hit", function(e){
-			if(!el.caught){
+			if(el.isActive && !el.caught){
 				el.caught = true;
+				//TODO animate fish through rotation
 				el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
 			}
 		});
@@ -155,9 +159,18 @@ AFRAME.registerComponent("hook-target", {
 			//If within 1.7m of the origin
 			if(pos.length() < 1.7){
 				el.caught = false;
-				//Get points for catching this fish
-				addPoints(10); //TODO triggers twice because both hands use the same hookshot projectile
-				this.respawn();
+				if(data.startGame){
+					//Special fish starts the game when hooked in
+					el.setAttribute("visible", false);
+					el.setAttribute("position", "0 1.7 -4");
+					el.isActive = false;
+					startGame();
+				}
+				else{
+					//Get points for catching this fish
+					addPoints(10); //TODO triggers twice because both hands use the same hookshot projectile
+					this.respawn();
+				}
 			}
 		}
 		else{
@@ -180,7 +193,7 @@ AFRAME.registerComponent("hook-target", {
 		var newX = 0;
 		var newVelX = 0;
 		var choice = Math.random();
-		var velOffset = Math.random() * 2 - 1; //[-1, 1)
+		var velOffset = Math.random() - 0.5;
 		if(choice < 0.5){
 			//Right to left
 			newX = 6;
@@ -197,6 +210,52 @@ AFRAME.registerComponent("hook-target", {
 		el.emit("updateVelocity", {x: newVelX, y: 0, z: 0}, false);
 	}
 });
+
+function spawnFishAt(x, y, z){
+	var parentEl = document.getElementById("fish-spawn-root");
+	
+	var boxEl = document.createElement("a-box");
+	boxEl.className = "collider";
+	boxEl.setAttribute("width", 1);
+	boxEl.setAttribute("height", 0.5);
+	boxEl.setAttribute("depth", 0.1);
+	boxEl.setAttribute("opacity", 0);
+	boxEl.setAttribute("position", x + " " + y + " " + z);
+	
+	var dirChoice = Math.random();
+	var velX = randRange(0.5, NORMAL_SPEED);
+	if(dirChoice < 0.5){
+		boxEl.object3D.rotation.y = Math.PI;
+	}
+	else{
+		velX *= -1;
+	}
+	boxEl.setAttribute("velocity", {
+		vel: {x: velX, y: 0, z: 0}
+	});
+	
+	
+	boxEl.setAttribute("hook-target", "");
+	
+	var fishEl = document.createElement("a-entity");
+	fishEl.setAttribute("fish", "");
+	
+	parentEl.appendChild(boxEl);
+	boxEl.appendChild(fishEl);
+}
+
+function startGame(){
+	//Change text to score
+	addPoints(0);
+	
+	//Spawn 5 fish TODO adjust later
+	for(var i = 0; i < 5; i++){
+		var fishX = randRange(-6, 6);
+		var fishY = randRange(0.5, 4);
+		var fishZ = randRange(-6, -3);
+		spawnFishAt(fishX, fishY, fishZ);
+	}
+}
 
 AFRAME.registerComponent("velocity", {
 	schema: {
