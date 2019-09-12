@@ -11,6 +11,11 @@ function addPoints(amount){
 	});
 }
 
+//[min, max)
+function randRange(min, max){
+    return Math.random() * (max - min + 1) + min;
+}
+
 AFRAME.registerComponent("hookshot", {	
 	schema: {
 		hand: {default: ""}
@@ -33,17 +38,14 @@ AFRAME.registerComponent("hookshot", {
 			var shot = el.shot;
 			
 			if(shot.isExtended){
-				//TODO could be interesting mechanic, to redirect the hookshot
-				//if(!shot.isReturning){
-					shot.isReturning = true;
-					var p1 = shot.object3D.position;
-					var p2 = el.object3D.position;
-					shot.homePos = p2;
-					var globalDir = new THREE.Vector3();
-					globalDir.subVectors(p2, p1).normalize().multiplyScalar(5);
-					shot.emit("updateVelocity", {x: globalDir.x, y: globalDir.y, z: globalDir.z}, false);
-					shot.emit("updateGravity", {gravity: 0});
-				//}
+				shot.isReturning = true;
+				var p1 = shot.object3D.position;
+				var p2 = el.object3D.position;
+				shot.homePos = p2;
+				var globalDir = new THREE.Vector3();
+				globalDir.subVectors(p2, p1).normalize().multiplyScalar(9);
+				shot.emit("updateVelocity", {x: globalDir.x, y: globalDir.y, z: globalDir.z}, false);
+				shot.emit("updateGravity", {gravity: 0});
 			}
 			else{
 				shot.isExtended = true;
@@ -59,7 +61,7 @@ AFRAME.registerComponent("hookshot", {
 				var point = new THREE.Vector3(0, -1, 0);
 				el.object3D.localToWorld(point);
 				var globalDir = point.sub(el.object3D.position);
-				var resultVel = globalDir.multiplyScalar(6);
+				var resultVel = globalDir.multiplyScalar(8);
 				//Need to emit this event in order for the velocity to actually update
 				//otherwise the element's properties (vel) carry over from before
 				shot.emit("updateVelocity", {x: resultVel.x, y: resultVel.y, z: resultVel.z}, false);
@@ -79,6 +81,14 @@ AFRAME.registerComponent("hookshot", {
 				el.shot.setAttribute("visible", false);
 				el.querySelector("#hook").setAttribute("visible", true);
 				el.shot.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
+			}
+		}
+		else{
+			//Stop moving if hit the floor
+			if(el.shot.object3D.position.y <= 0){
+				el.shot.object3D.position.y = 0;
+				el.shot.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
+				el.shot.emit("updateGravity", {gravity: 0});
 			}
 		}
 	}
@@ -144,13 +154,32 @@ AFRAME.registerComponent("hook-target", {
 				el.caught = false;
 				//Get points for catching this fish
 				addPoints(10); //TODO triggers twice because both hands use the same hookshot projectile
-				//TODO Respawn the fish at a random position
-				el.object3D.position.x = 4;
-				el.object3D.position.y = 2;
-				el.object3D.position.z = -3;
-				el.emit("updateVelocity", {x: -0.4, y: 0, z: 0}, false);
+				this.respawn();
 			}
 		}
+	},
+	
+	respawn: function(){
+		var el = this.el;
+		el.object3D.position.y = randRange(1, 4);
+		el.object3D.position.z = randRange(-5, -3);
+		
+		var newX = 0;
+		var newVelX = 0;
+		var choice = Math.random();
+		if(choice < 0.5){
+			//Right to left
+			newX = 6;
+			newVelX = -0.4;
+			el.object3D.rotation.y = Math.PI;
+		}
+		else{
+			//Left to right
+			newX = -6;
+			newVelX = 0.4;
+		}
+		el.object3D.position.x = newX;
+		el.emit("updateVelocity", {x: newVelX, y: 0, z: 0}, false);
 	}
 });
 
@@ -187,6 +216,5 @@ AFRAME.registerComponent("velocity", {
 		if(el.vel.y < -10){ //Limit falling speed
 			el.vel.y = -10;
 		}
-		//TODO automatically retract hookshot if falling for too long or too low
 	}
 });
