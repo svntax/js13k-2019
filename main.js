@@ -19,6 +19,34 @@ function randRange(min, max){
     return Math.random() * (max - min + 1) + min;
 }
 
+AFRAME.registerShader("sky-gradient", {
+	schema: {
+		topColor: {type: "vec3", default: {x: 0, y: 195, z: 255}, is: "uniform"},
+		bottomColor: {type: "vec3", default: {x: 255, y: 255, z: 255}, is: "uniform"}
+	},
+	
+	vertexShader: [
+		'varying vec3 vWorldPosition;',
+		'void main(){',
+		'  vec4 worldPosition = modelMatrix * vec4(position, 1.0);',
+		'  vWorldPosition = worldPosition.xyz;',
+		'  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+		'}'
+	].join("\n"),
+	
+	fragmentShader: [
+		'uniform vec3 topColor;',
+		'uniform vec3 bottomColor;',
+		'varying vec3 vWorldPosition;',
+		'void main(){',
+		'  float h = normalize(vWorldPosition).y;',
+		'  vec3 bCol = vec3(bottomColor.x/255.0, bottomColor.y/255.0, bottomColor.z/255.0);',
+		'  vec3 tCol = vec3(topColor.x/255.0, topColor.y/255.0, topColor.z/255.0);',
+		'  gl_FragColor = vec4(mix(bCol, tCol, max(pow(max(h , 0.0), 0.6), 0.0)), 1.0);',
+		'}'
+	].join("\n")
+});
+
 AFRAME.registerComponent("hookshot", {	
 	schema: {
 		hand: {default: ""}
@@ -140,6 +168,10 @@ AFRAME.registerComponent("hook-target", {
 		el.addEventListener("hit", function(e){
 			if(el.isActive && !el.caught){
 				el.caught = true;
+				fishSounds[fishNoteIndex++].play();
+				if(fishNoteIndex > 4){
+					fishNoteIndex = 4;
+				}
 				//TODO animate fish through rotation
 				el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
 			}
@@ -157,8 +189,10 @@ AFRAME.registerComponent("hook-target", {
 			
 			var pos = el.object3D.position;
 			//If within 1.7m of the origin
-			if(pos.length() < 1.7){
+			if(pos.length() < 1.7){ //TODO fix bug where fish stops if homePos is past 1.7m
 				el.caught = false;
+				fishNoteIndex = 0;
+				collectSound.play();
 				if(data.startGame){
 					//Special fish starts the game when hooked in
 					el.setAttribute("visible", false);
