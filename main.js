@@ -91,7 +91,7 @@ AFRAME.registerShader("sky-gradient", {
 
 AFRAME.registerComponent("timer", {
 	schema: {
-		duration: {type: "number", default: 8}
+		duration: {type: "number", default: 15}
 	},
 	
 	init: function(){
@@ -100,7 +100,9 @@ AFRAME.registerComponent("timer", {
 		el.timeLeft = el.duration;
 		el.prevTime = el.timeLeft;
 		el.isActive = false;
+		el.spawnedRareFish = false;
 		el.addEventListener("startTimer", function(e){
+			el.spawnedRareFish = false;
 			el.timeLeft = el.duration;
 			el.prevTime = el.duration;
 			if(document.monetization && document.monetization.state === 'started'){
@@ -129,6 +131,18 @@ AFRAME.registerComponent("timer", {
 			if(newTime <= 0){
 				el.isActive = false;
 				endGame();
+			}
+			if(!el.spawnedRareFish && newTime <= 10){
+				rareSound.play();
+				//Spawn rare fish in the last 10 seconds
+				el.spawnedRareFish = true;
+				//Spawn 10 fish TODO adjust later
+				for(var i = 0; i < 3; i++){
+					var fishX = randRange(-6, 6);
+					var fishY = randRange(0.5, 4);
+					var fishZ = randRange(-6, -3);
+					spawnFishAt(fishX, fishY, fishZ, true);
+				}
 			}
 		}
 	}
@@ -234,7 +248,8 @@ AFRAME.registerComponent("hookshot", {
 
 AFRAME.registerComponent("fish", {
 	schema: {
-		radius: {type: "number", default: 0.4}
+		radius: {type: "number", default: 0.4},
+		color: {default: "#fcc201"}
 	},
 	
 	init: function(){
@@ -248,7 +263,7 @@ AFRAME.registerComponent("fish", {
 			5, 0, 2,    5, 2, 1,   0, 5, 3,    5, 1, 3,
 		];
 		var geometry = new THREE.PolyhedronBufferGeometry( vertices, indices, this.data.radius, 0);
-		var material = new THREE.MeshPhongMaterial( { color: 0xfcc201} );
+		var material = new THREE.MeshPhongMaterial( { color: this.data.color} );
 		
 		var bodyMesh = new THREE.Mesh(geometry, material);
 		bodyMesh.scale.set(1.2, 1, 0.4);
@@ -263,7 +278,8 @@ AFRAME.registerComponent("fish", {
 
 AFRAME.registerComponent("hook-target", {
 	schema: {
-		startGame: {type: "boolean", default: false}
+		startGame: {type: "boolean", default: false},
+		isRare: {type: "boolean", default: false}
 	},
 	
 	init: function(){
@@ -341,8 +357,15 @@ AFRAME.registerComponent("hook-target", {
 				}
 				else{
 					//Get points for catching this fish
-					addPoints(10);
-					this.respawn();
+					if(data.isRare){
+						//Rare fish give more points but don't respawn
+						addPoints(50);
+						el.object3D.position.y = -50; //Hacky
+					}
+					else{
+						addPoints(10);
+						this.respawn();
+					}
 				}
 			}
 		}
@@ -408,7 +431,7 @@ AFRAME.registerComponent("hook-target", {
 	}
 });
 
-function spawnFishAt(x, y, z){
+function spawnFishAt(x, y, z, isRare = false){
 	var parentEl = document.getElementById("fish-spawn-root");
 	
 	var boxEl = document.createElement("a-box");
@@ -432,10 +455,10 @@ function spawnFishAt(x, y, z){
 	});
 	
 	
-	boxEl.setAttribute("hook-target", "");
+	boxEl.setAttribute("hook-target", isRare ? "isRare: true" : "");
 	
 	var fishEl = document.createElement("a-entity");
-	fishEl.setAttribute("fish", "");
+	fishEl.setAttribute("fish", isRare ? "color: #8836c2" : "");
 	
 	parentEl.appendChild(boxEl);
 	boxEl.appendChild(fishEl);
