@@ -28,8 +28,7 @@ function startGame(){
 	currentScore = 0;
 	addPoints(0);
 	
-	//Spawn 10 fish TODO adjust later
-	for(var i = 0; i < 10; i++){
+	for(var i = 0; i < 16; i++){
 		var fishX = randRange(-6, 6);
 		var fishY = randRange(0.5, 4);
 		var fishZ = randRange(-6, -3);
@@ -136,7 +135,6 @@ AFRAME.registerComponent("timer", {
 				rareSound.play();
 				//Spawn rare fish in the last 10 seconds
 				el.spawnedRareFish = true;
-				//Spawn 10 fish TODO adjust later
 				for(var i = 0; i < 3; i++){
 					var fishX = randRange(-6, 6);
 					var fishY = randRange(0.5, 4);
@@ -293,6 +291,8 @@ AFRAME.registerComponent("hook-target", {
 		el.hookshotLeft = document.getElementById("projectile-left");
 		el.hookshotRight = document.getElementById("projectile");
 		el.hookshot = null;
+		el.firstElementChild.setAttribute("animation", "property: rotation; from: 0 -20 0; to: 0 20; dur: 250; loop: true; dir: alternate; startEvents: struggle; pauseEvents: relax");
+		el.firstElementChild.setAttribute("animation__2", "property: rotation; from: 0 -20 0; to: 0 20; dur: 800; loop: true; dir: alternate; startEvents: swim; pauseEvents: struggle");
 		el.addEventListener("hit", function(e){
 			if(el.isActive && !el.caught){
 				if((data.startGame && currentState === State.MENU) || currentState === State.GAMEPLAY){
@@ -314,8 +314,8 @@ AFRAME.registerComponent("hook-target", {
 						if(fishNoteIndex > 4){
 							fishNoteIndex = 4;
 						}
-						//TODO animate fish through rotation
 						el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
+						el.firstElementChild.emit("struggle");
 					}
 				}
 			}
@@ -327,10 +327,17 @@ AFRAME.registerComponent("hook-target", {
 			var vz = 9 * Math.sin(theta);
 			el.emit("updateVelocity", {x: vx, y: 0, z: vz}, false);
 			el.object3D.rotation.y = -theta + Math.PI;
+			el.firstElementChild.emit("struggle");
 		});
 		el.addEventListener("reappear", function(e){
 			el.isReappearing = true;
 		});
+		el.addEventListener("relax", function(e){
+			el.firstElementChild.object3D.rotation.y = 0;
+		});
+		if(!data.startGame){
+			el.firstElementChild.emit("swim");
+		}
 	},
 	
 	tick: function(time, deltaTime){
@@ -353,6 +360,7 @@ AFRAME.registerComponent("hook-target", {
 					el.setAttribute("visible", false);
 					el.setAttribute("position", "0 1.7 -4");
 					el.isActive = false;
+					el.firstElementChild.emit("relax");
 					startGame();
 				}
 				else{
@@ -428,6 +436,7 @@ AFRAME.registerComponent("hook-target", {
 		}
 		el.object3D.position.x = newX;
 		el.emit("updateVelocity", {x: newVelX, y: 0, z: 0}, false);
+		el.firstElementChild.emit("swim");
 	}
 });
 
