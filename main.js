@@ -49,6 +49,10 @@ function endGame(){
 		property: "position", from: "0 0 -4", to: "0 1.7 -4", dur: "1900", autoplay: true
 	});*/
 	startingFish.emit("reappear");
+	
+	document.getElementById("right-controller").emit("resetHook");
+	document.getElementById("left-controller").emit("resetHook");
+	
 	var fishEls = document.getElementById("fish-spawn-root").querySelectorAll("*");
 	for(var i = 0; i < fishEls.length; i++){
 		fishEls[i].emit("swimAway");
@@ -182,7 +186,12 @@ AFRAME.registerComponent("hookshot", {
 		});
 		
 		el.addEventListener("resetHook", function(e){
-			this.resetHook();
+			el.shot.setAttribute("position", "0 0 0");
+			el.shot.isReturning = false;
+			el.shot.isExtended = false;
+			el.shot.setAttribute("visible", false);
+			el.querySelector(".hook").setAttribute("visible", true);
+			el.shot.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
 		});
 	},
 	
