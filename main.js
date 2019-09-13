@@ -38,6 +38,7 @@ function startGame(){
 	
 	var timerEl = document.getElementById("time");
 	timerEl.emit("startTimer");
+	document.getElementById("title").setAttribute("visible", false);
 }
 
 function endGame(){
@@ -45,9 +46,6 @@ function endGame(){
 	gameOverSound.play();
 	var startingFish = document.getElementById("starting-fish");
 	startingFish.setAttribute("visible", true);
-	/*startingFish.setAttribute("animation", {
-		property: "position", from: "0 0 -4", to: "0 1.7 -4", dur: "1900", autoplay: true
-	});*/
 	startingFish.emit("reappear");
 	
 	document.getElementById("right-controller").emit("resetHook");
@@ -55,8 +53,12 @@ function endGame(){
 	
 	var fishEls = document.getElementById("fish-spawn-root").querySelectorAll("*");
 	for(var i = 0; i < fishEls.length; i++){
+		if(fishEls[i].caught){
+			fishEls[i].parentNode.removeChild(fishEls[i]);
+		}
 		fishEls[i].emit("swimAway");
 	}
+	document.getElementById("title").setAttribute("visible", true);
 }
 
 AFRAME.registerShader("sky-gradient", {
