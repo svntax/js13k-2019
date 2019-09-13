@@ -103,6 +103,11 @@ AFRAME.registerComponent("timer", {
 		el.addEventListener("startTimer", function(e){
 			el.timeLeft = el.duration;
 			el.prevTime = el.duration;
+			if(document.monetization && document.monetization.state === 'started'){
+				//Subscribers get 30 seconds extra
+				el.timeLeft += 30;
+				el.prevTime += 30;
+			}
 			el.setAttribute("text", {
 				value: "Time left: " + el.duration
 			});
