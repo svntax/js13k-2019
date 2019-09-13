@@ -28,8 +28,8 @@ function startGame(){
 	currentScore = 0;
 	addPoints(0);
 	
-	//Spawn 5 fish TODO adjust later
-	for(var i = 0; i < 5; i++){
+	//Spawn 10 fish TODO adjust later
+	for(var i = 0; i < 10; i++){
 		var fishX = randRange(-6, 6);
 		var fishY = randRange(0.5, 4);
 		var fishZ = randRange(-6, -3);
@@ -44,18 +44,15 @@ function endGame(){
 	currentState = State.GAMEOVER;
 	gameOverSound.play();
 	var startingFish = document.getElementById("starting-fish");
-	startingFish.setAttribute("visible", true); //TODO delete/move over to the transition code
-	startingFish.setAttribute("animation", {
+	startingFish.setAttribute("visible", true);
+	/*startingFish.setAttribute("animation", {
 		property: "position", from: "0 0 -4", to: "0 1.7 -4", dur: "1900", autoplay: true
-	});
-	//TODO don't make active until player finished hookshot pulllback and all fish are gone
+	});*/
+	startingFish.emit("reappear");
 	var fishEls = document.getElementById("fish-spawn-root").querySelectorAll("*");
 	for(var i = 0; i < fishEls.length; i++){
 		fishEls[i].emit("swimAway");
 	}
-	/*while(fishRoot.firstChild){
-		fishRoot.removeChild(fishRoot.firstChild);
-	}*/
 }
 
 AFRAME.registerShader("sky-gradient", {
@@ -99,6 +96,7 @@ AFRAME.registerComponent("timer", {
 		el.isActive = false;
 		el.addEventListener("startTimer", function(e){
 			el.timeLeft = el.duration;
+			el.prevTime = el.duration;
 			el.setAttribute("text", {
 				value: "Time left: " + el.duration
 			});
@@ -176,6 +174,10 @@ AFRAME.registerComponent("hookshot", {
 				shot.emit("updateVelocity", {x: resultVel.x, y: resultVel.y, z: resultVel.z}, false);
 				shot.emit("updateGravity", {gravity: -5});
 			}
+		});
+		
+		el.addEventListener("resetHook", function(e){
+			this.resetHook();
 		});
 	},
 	
@@ -268,8 +270,8 @@ AFRAME.registerComponent("hook-target", {
 		//Scatter in a random direction and fade away
 		el.addEventListener("swimAway", function(e){
 			var theta = THREE.Math.degToRad(randRange(0, 360));
-			var vx = 2 * Math.cos(theta);
-			var vz = 2 * Math.sin(theta);
+			var vx = 8 * Math.cos(theta);
+			var vz = 8 * Math.sin(theta);
 			el.emit("updateVelocity", {x: vx, y: 0, z: vz}, false);
 			el.object3D.rotation.y = -theta + Math.PI;
 		});
@@ -316,8 +318,8 @@ AFRAME.registerComponent("hook-target", {
 							el.gameOverDelayTimer = 2;
 							//Reactivate the special starting fish and go to menu state
 							el.isReappearing = false;
-							el.setAttribute("visible", true);
 							el.isActive = true;
+							console.log("Reactivated start fish");
 							currentState = State.MENU;
 						}
 					}
@@ -378,7 +380,7 @@ function spawnFishAt(x, y, z){
 	boxEl.setAttribute("width", 1);
 	boxEl.setAttribute("height", 0.5);
 	boxEl.setAttribute("depth", 0.1);
-	boxEl.setAttribute("opacity", 0.5);
+	boxEl.setAttribute("opacity", 0);
 	boxEl.setAttribute("position", x + " " + y + " " + z);
 	
 	var dirChoice = Math.random();

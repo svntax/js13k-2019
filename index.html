@@ -24,13 +24,14 @@
 		</a-entity>
 		
 		<a-entity rotation="0 -15 0">
-			<a-entity id="time" position="0 0.8 -1.5" geometry="primitive: plane; width: 0.8; height: 0.3" material="color: #AAAAFF"
-			text="value: Time left: 30; color: black; width: 2; align: center"
+			<a-entity id="time" position="0 0.8 -1.5" geometry="primitive: plane; width: 0.6; height: 0.3" material="color: #AAAAFF"
+			text="value: Time left: 0; color: black; width: 2; align: center"
 			timer></a-entity>
 		</a-entity>
 		
 		<a-box id="starting-fish" width="1" height="0.5" depth="0.1" color="white" opacity="0" position="0 1.7 -4"
-		hook-target="startGame: true" class="collider">
+		hook-target="startGame: true" class="collider"
+		animation="property: position; from: 0 0 -4; to: 0 1.7 -4; dur: 1950; startEvents: reappear">
 			<a-entity fish></a-entity>
 		</a-box>
 		
