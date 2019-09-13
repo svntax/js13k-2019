@@ -1,5 +1,4 @@
 var NORMAL_SPEED = 1;
-var FAST_SPEED = 3;
 
 var currentScore = 0;
 var highScore = 0;
