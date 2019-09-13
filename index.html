@@ -12,7 +12,7 @@
 	<a-scene>		
 		<a-entity geometry="primitive: plane; width: 50; height: 50"
 		rotation="-90 0 0"
-        material="color: #1B974B">
+        material="color: #81b33b">
 		</a-entity>
 		
 		<a-camera wasd-controls-enabled="false"></a-camera>
@@ -39,6 +39,7 @@
 		</a-box>
 		
 		<a-entity id="fish-spawn-root"></a-entity>
+		<a-entity id="mountains-root"></a-entity>
 		
 		<a-entity id="projectile" geometry="primitive: sphere; radius: 0.05" position="0 -10 0" material="opacity: 0"
 		velocity="vel: 0 0 0"
@@ -65,5 +66,26 @@
 			</a-torus>
 		</a-entity>
 	</a-scene>
+	<script type="text/javascript">
+		var shades = ["#66573e", "#82735b", "#9e907a"];
+		for(var i = 3; i < 37; i++){
+			var parentEl = document.getElementById("mountains-root");
+			
+			var boxRoot = document.createElement("a-entity");
+			boxRoot.setAttribute("rotation", "0 " + (i * 9) + " 0");
+			
+			var boxEl = document.createElement("a-box");
+			boxEl.className = "collider";
+			boxEl.setAttribute("width", 8);
+			boxEl.setAttribute("height", 4 + Math.random() * 6);
+			boxEl.setAttribute("depth", 8);
+			boxEl.setAttribute("color", shades[Math.floor(Math.random()*3)]);
+			boxEl.setAttribute("position", "0 " + (Math.random()*3) + " " + (-35 + Math.random() * 5));
+			boxEl.setAttribute("rotation", Math.floor(Math.random() * 360) + " " + Math.floor(Math.random() * 360) + " ");
+			
+			parentEl.appendChild(boxRoot);
+			boxRoot.appendChild(boxEl);
+		}
+	</script>
 </body>
 </html>

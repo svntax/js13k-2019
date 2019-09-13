@@ -323,8 +323,8 @@ AFRAME.registerComponent("hook-target", {
 		//Scatter in a random direction and fade away
 		el.addEventListener("swimAway", function(e){
 			var theta = THREE.Math.degToRad(randRange(0, 360));
-			var vx = 8 * Math.cos(theta);
-			var vz = 8 * Math.sin(theta);
+			var vx = 9 * Math.cos(theta);
+			var vz = 9 * Math.sin(theta);
 			el.emit("updateVelocity", {x: vx, y: 0, z: vz}, false);
 			el.object3D.rotation.y = -theta + Math.PI;
 		});
