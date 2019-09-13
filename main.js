@@ -90,7 +90,7 @@ AFRAME.registerShader("sky-gradient", {
 
 AFRAME.registerComponent("timer", {
 	schema: {
-		duration: {type: "number", default: 15}
+		duration: {type: "number", default: 60}
 	},
 	
 	init: function(){
