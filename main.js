@@ -138,7 +138,12 @@ AFRAME.registerComponent("hookshot", {
 		el.setAttribute("vive-controls", config);
 		el.setAttribute("oculus-touch-controls", config);
 		
-		el.shot = document.getElementById("projectile")
+		if(this.data.hand === "right"){
+			el.shot = document.getElementById("projectile");
+		}
+		else{
+			el.shot = document.getElementById("projectile-left");
+		}
 		
 		el.addEventListener("buttondown", function(){
 			//Hook projectile, which is separate from the controller-tracked model
@@ -253,17 +258,33 @@ AFRAME.registerComponent("hook-target", {
 		el.isReappearing = false;
 		el.caught = false; //Whether it's caught by the hookshot or not
 		el.isActive = true;
-		el.hookshot = document.getElementById("projectile");
+		el.hookshotLeft = document.getElementById("projectile-left");
+		el.hookshotRight = document.getElementById("projectile");
+		el.hookshot = null;
 		el.addEventListener("hit", function(e){
 			if(el.isActive && !el.caught){
 				if((data.startGame && currentState === State.MENU) || currentState === State.GAMEPLAY){
-					el.caught = true;
-					fishSounds[fishNoteIndex++].play();
-					if(fishNoteIndex > 4){
-						fishNoteIndex = 4;
+					//Hacky way of getting the correct hookshot
+					var distLeft = el.hookshotLeft.object3D.position.distanceTo(el.object3D.position);
+					var distRight = el.hookshotRight.object3D.position.distanceTo(el.object3D.position);
+					if(distRight < distLeft){
+						el.hookshot = el.hookshotRight;
 					}
-					//TODO animate fish through rotation
-					el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
+					else{
+						el.hookshot = el.hookshotLeft;
+					}
+					
+					//Hack: for some reason this hit event triggers for all fish on game start if both hookshots are at origin,
+					//need to manually check distance
+					if(el.hookshot.object3D.position.distanceTo(el.object3D.position) <= 0.8){
+						el.caught = true;
+						fishSounds[fishNoteIndex++].play();
+						if(fishNoteIndex > 4){
+							fishNoteIndex = 4;
+						}
+						//TODO animate fish through rotation
+						el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
+					}
 				}
 			}
 		});
@@ -319,7 +340,6 @@ AFRAME.registerComponent("hook-target", {
 							//Reactivate the special starting fish and go to menu state
 							el.isReappearing = false;
 							el.isActive = true;
-							console.log("Reactivated start fish");
 							currentState = State.MENU;
 						}
 					}

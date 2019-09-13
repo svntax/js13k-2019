@@ -46,6 +46,15 @@
 			</a-entity>
 		</a-entity>
 		
+		<a-entity id="projectile-left" geometry="primitive: sphere; radius: 0.05" position="0 -10 0" material="opacity: 0"
+		velocity="vel: 0 0 0"
+		sphere-collider="objects: .collider; radius: 0.05">
+			<a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
+			material="color: #35478C"
+			rotation="180 0 0">
+			</a-entity>
+		</a-entity>
+		
 		<a-entity hookshot="hand: right">
 			<a-entity class="hook" geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
 			material="color: #35478C"
@@ -55,14 +64,16 @@
 			<a-torus color="gray" radius="0.04" radius-tubular="0.004"
 			rotation="0 90 0" position="0 0 0">
 			</a-torus>
-			
-			<a-entity id="raycast" raycaster="showLine: true; far: 50" line="color: blue" rotation="90 0 0">
-			</a-entity>
 		</a-entity>
 		<a-entity hookshot="hand: left">
-			<a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
-			material="color: #35478C">
+			<a-entity class="hook" geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
+			material="color: #35478C"
+			rotation="180 0 0" position="0 -0.1 0">
 			</a-entity>
+			
+			<a-torus color="gray" radius="0.04" radius-tubular="0.004"
+			rotation="0 90 0" position="0 0 0">
+			</a-torus>
 		</a-entity>
 	</a-scene>
 </body>
