@@ -334,7 +334,7 @@ AFRAME.registerComponent("hook-target", {
 				}
 				else{
 					//Get points for catching this fish
-					addPoints(10); //TODO triggers twice because both hands use the same hookshot projectile
+					addPoints(10);
 					this.respawn();
 				}
 			}
