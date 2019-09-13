@@ -4,6 +4,9 @@ var FAST_SPEED = 3;
 var currentScore = 0;
 var highScore = 0;
 
+var State = {MENU: 0, GAMEPLAY: 1, GAMEOVER: 2};
+var currentState = State.MENU;
+
 function addPoints(amount){
 	currentScore += amount;
 	if(currentScore > highScore){
@@ -17,6 +20,42 @@ function addPoints(amount){
 //[min, max)
 function randRange(min, max){
     return Math.random() * (max - min + 1) + min;
+}
+
+function startGame(){
+	currentState = State.GAMEPLAY
+	//Change text to score
+	currentScore = 0;
+	addPoints(0);
+	
+	//Spawn 5 fish TODO adjust later
+	for(var i = 0; i < 5; i++){
+		var fishX = randRange(-6, 6);
+		var fishY = randRange(0.5, 4);
+		var fishZ = randRange(-6, -3);
+		spawnFishAt(fishX, fishY, fishZ);
+	}
+	
+	var timerEl = document.getElementById("time");
+	timerEl.emit("startTimer");
+}
+
+function endGame(){
+	currentState = State.GAMEOVER;
+	gameOverSound.play();
+	var startingFish = document.getElementById("starting-fish");
+	startingFish.setAttribute("visible", true); //TODO delete/move over to the transition code
+	startingFish.setAttribute("animation", {
+		property: "position", from: "0 0 -4", to: "0 1.7 -4", dur: "1900", autoplay: true
+	});
+	//TODO don't make active until player finished hookshot pulllback and all fish are gone
+	var fishEls = document.getElementById("fish-spawn-root").querySelectorAll("*");
+	for(var i = 0; i < fishEls.length; i++){
+		fishEls[i].emit("swimAway");
+	}
+	/*while(fishRoot.firstChild){
+		fishRoot.removeChild(fishRoot.firstChild);
+	}*/
 }
 
 AFRAME.registerShader("sky-gradient", {
@@ -45,6 +84,45 @@ AFRAME.registerShader("sky-gradient", {
 		'  gl_FragColor = vec4(mix(bCol, tCol, max(pow(max(h , 0.0), 0.6), 0.0)), 1.0);',
 		'}'
 	].join("\n")
+});
+
+AFRAME.registerComponent("timer", {
+	schema: {
+		duration: {type: "number", default: 8}
+	},
+	
+	init: function(){
+		var el = this.el;
+		el.duration = this.data.duration;
+		el.timeLeft = el.duration;
+		el.prevTime = el.timeLeft;
+		el.isActive = false;
+		el.addEventListener("startTimer", function(e){
+			el.timeLeft = el.duration;
+			el.setAttribute("text", {
+				value: "Time left: " + el.duration
+			});
+			el.isActive = true;
+		});
+	},
+	
+	tick: function(time, deltaTime){
+		var el = this.el;
+		if(el.isActive){
+			el.timeLeft -= deltaTime / 1000;
+			var newTime = Math.floor(el.timeLeft);
+			if(newTime < el.prevTime){
+				el.prevTime = newTime;
+				el.setAttribute("text", {
+					value: "Time left: " + newTime
+				});
+			}
+			if(newTime <= 0){
+				el.isActive = false;
+				endGame();
+			}
+		}
+	}
 });
 
 AFRAME.registerComponent("hookshot", {	
@@ -81,7 +159,7 @@ AFRAME.registerComponent("hookshot", {
 			else{
 				shot.isExtended = true;
 				shot.setAttribute("visible", true);
-				el.querySelector("#hook").setAttribute("visible", false);
+				el.querySelector(".hook").setAttribute("visible", false);
 				shot.setAttribute("position", el.object3D.position);
 				shot.object3D.rotation.x = el.object3D.rotation.x;
 				shot.object3D.rotation.y = el.object3D.rotation.y;
@@ -107,11 +185,7 @@ AFRAME.registerComponent("hookshot", {
 			var pos = el.shot.object3D.position;
 			//If within 0.5m of the home position
 			if(pos.distanceTo(el.shot.homePos) <= 0.5){
-				el.shot.isReturning = false;
-				el.shot.isExtended = false;
-				el.shot.setAttribute("visible", false);
-				el.querySelector("#hook").setAttribute("visible", true);
-				el.shot.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
+				this.resetHookshot();
 			}
 		}
 		else{
@@ -122,6 +196,16 @@ AFRAME.registerComponent("hookshot", {
 				el.shot.emit("updateGravity", {gravity: 0});
 			}
 		}
+	},
+	
+	resetHookshot: function(){
+		var el = this.el;
+		el.shot.setAttribute("position", "0 0 0");
+		el.shot.isReturning = false;
+		el.shot.isExtended = false;
+		el.shot.setAttribute("visible", false);
+		el.querySelector(".hook").setAttribute("visible", true);
+		el.shot.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
 	}
 });
 
@@ -162,19 +246,35 @@ AFRAME.registerComponent("hook-target", {
 	init: function(){
 		var data = this.data;
 		var el = this.el;
+		el.deathTimer = 1 + Math.random();
+		el.gameOverDelayTimer = 2;
+		el.isReappearing = false;
 		el.caught = false; //Whether it's caught by the hookshot or not
 		el.isActive = true;
 		el.hookshot = document.getElementById("projectile");
 		el.addEventListener("hit", function(e){
 			if(el.isActive && !el.caught){
-				el.caught = true;
-				fishSounds[fishNoteIndex++].play();
-				if(fishNoteIndex > 4){
-					fishNoteIndex = 4;
+				if((data.startGame && currentState === State.MENU) || currentState === State.GAMEPLAY){
+					el.caught = true;
+					fishSounds[fishNoteIndex++].play();
+					if(fishNoteIndex > 4){
+						fishNoteIndex = 4;
+					}
+					//TODO animate fish through rotation
+					el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
 				}
-				//TODO animate fish through rotation
-				el.emit("updateVelocity", {x: 0, y: 0, z: 0}, false);
 			}
+		});
+		//Scatter in a random direction and fade away
+		el.addEventListener("swimAway", function(e){
+			var theta = THREE.Math.degToRad(randRange(0, 360));
+			var vx = 2 * Math.cos(theta);
+			var vz = 2 * Math.sin(theta);
+			el.emit("updateVelocity", {x: vx, y: 0, z: vz}, false);
+			el.object3D.rotation.y = -theta + Math.PI;
+		});
+		el.addEventListener("reappear", function(e){
+			el.isReappearing = true;
 		});
 	},
 	
@@ -189,7 +289,7 @@ AFRAME.registerComponent("hook-target", {
 			
 			var pos = el.object3D.position;
 			//If within 1.7m of the origin
-			if(pos.length() < 1.7){ //TODO fix bug where fish stops if homePos is past 1.7m
+			if(pos.length() < 1.7){
 				el.caught = false;
 				fishNoteIndex = 0;
 				collectSound.play();
@@ -208,13 +308,38 @@ AFRAME.registerComponent("hook-target", {
 			}
 		}
 		else{
-			if(el.object3D.position.x < -8){
-				el.emit("updateVelocity", {x: NORMAL_SPEED, y: 0, z: 0}, false);
-				el.object3D.rotation.y = Math.PI;
+			if(currentState === State.GAMEOVER){
+				if(data.startGame){
+					if(el.isReappearing){
+						el.gameOverDelayTimer -= deltaTime / 1000;
+						if(el.gameOverDelayTimer <= 0){
+							el.gameOverDelayTimer = 2;
+							//Reactivate the special starting fish and go to menu state
+							el.isReappearing = false;
+							el.setAttribute("visible", true);
+							el.isActive = true;
+							currentState = State.MENU;
+						}
+					}
+				}
+				else{
+					if(el.deathTimer > 0){
+						el.deathTimer -= deltaTime / 1000;
+						if(el.deathTimer <= 0){
+							el.parentNode.removeChild(el);
+						}
+					}
+				}
 			}
-			if(el.object3D.position.x > 8){
-				el.emit("updateVelocity", {x: -NORMAL_SPEED, y: 0, z: 0}, false);
-				el.object3D.rotation.y = 0;
+			else if(currentState === State.GAMEPLAY){
+				if(el.object3D.position.x < -8){
+					el.emit("updateVelocity", {x: NORMAL_SPEED, y: 0, z: 0}, false);
+					el.object3D.rotation.y = Math.PI;
+				}
+				if(el.object3D.position.x > 8){
+					el.emit("updateVelocity", {x: -NORMAL_SPEED, y: 0, z: 0}, false);
+					el.object3D.rotation.y = 0;
+				}
 			}
 		}
 	},
@@ -253,7 +378,7 @@ function spawnFishAt(x, y, z){
 	boxEl.setAttribute("width", 1);
 	boxEl.setAttribute("height", 0.5);
 	boxEl.setAttribute("depth", 0.1);
-	boxEl.setAttribute("opacity", 0);
+	boxEl.setAttribute("opacity", 0.5);
 	boxEl.setAttribute("position", x + " " + y + " " + z);
 	
 	var dirChoice = Math.random();
@@ -276,19 +401,6 @@ function spawnFishAt(x, y, z){
 	
 	parentEl.appendChild(boxEl);
 	boxEl.appendChild(fishEl);
-}
-
-function startGame(){
-	//Change text to score
-	addPoints(0);
-	
-	//Spawn 5 fish TODO adjust later
-	for(var i = 0; i < 5; i++){
-		var fishX = randRange(-6, 6);
-		var fishY = randRange(0.5, 4);
-		var fishZ = randRange(-6, -3);
-		spawnFishAt(fishX, fishY, fishZ);
-	}
 }
 
 AFRAME.registerComponent("velocity", {

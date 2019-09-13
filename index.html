@@ -18,8 +18,16 @@
 		
 		<a-sky material="shader: sky-gradient"></a-sky>
 		
-		<a-entity id="score" position="0 0.8 -1.2" geometry="primitive: plane; width: 0.8; height: 0.3" material="color: #AAAAFF"
-		text="value: Hook the fish\nto Start!; color: black; width: 2; align: center"></a-entity>
+		<a-entity rotation="0 15 0">
+			<a-entity id="score" position="0 0.8 -1.5" geometry="primitive: plane; width: 0.8; height: 0.3" material="color: #AAAAFF"
+			text="value: Hook the fish\nto Start!; color: black; width: 2; align: center"></a-entity>
+		</a-entity>
+		
+		<a-entity rotation="0 -15 0">
+			<a-entity id="time" position="0 0.8 -1.5" geometry="primitive: plane; width: 0.8; height: 0.3" material="color: #AAAAFF"
+			text="value: Time left: 30; color: black; width: 2; align: center"
+			timer></a-entity>
+		</a-entity>
 		
 		<a-box id="starting-fish" width="1" height="0.5" depth="0.1" color="white" opacity="0" position="0 1.7 -4"
 		hook-target="startGame: true" class="collider">
@@ -38,7 +46,7 @@
 		</a-entity>
 		
 		<a-entity hookshot="hand: right">
-			<a-entity id="hook" geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
+			<a-entity class="hook" geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0.002; height: 0.1"
 			material="color: #35478C"
 			rotation="180 0 0" position="0 -0.1 0">
 			</a-entity>
